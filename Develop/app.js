@@ -8,9 +8,6 @@ const OUTPUT_DIR = path.resolve(__dirname, "output");
 const outputPath = path.join(OUTPUT_DIR, "team.html");
 const render = require("./lib/htmlRenderer");
 const employees = [];
-let nextMember = true;
-// Write code to use inquirer to gather information about the development team members,
-// and to create objects for each team member (using the correct classes as blueprints!)
 
 console.log("Please build your team.");
 
@@ -84,72 +81,61 @@ const memberQ = {
   choices: ["Engineer", "Intern", "I don't want to add any more team members"]
 }
 
-const validateQ = {
-  type: "validate",
-  message: "That ID is already taken. Please choose another.",
-  name: "idCheck"
-}
-// After the user has input all employees desired, call the `render` function (required
-// above) and pass in an array containing all employee objects; the `render` function will
-// generate and return a block of HTML including templated divs for each employee!
-function mgrPrompt() {
+function start() {
   inquirer.prompt(managerQs).then(function (answers) {
-    const manager = new Manager(answers.mangName, answers.mangId, answers.mangEmail, answers.MangOffNum);
+    const manager = new Manager(answers.mangName, answers.mangId, answers.mangEmail, answers.mangOffNum);
     employees.push(manager);
-    inquirer.prompt(memberQ).then(function (data) {
-      if (nextMember) {
-        console.log("hi");
-        while (memberQ.choices === "Engineer" || memberQ.choices === "Intern") {
-          switch (memberQ.choices) {
-            case "Engineer":
-              inquirer.prompt(engineerQs).then(function (answers) {
-                const engineer = new Engineer(answers.engName, answers.engId, answers.engEmail, answers.engGitHub);
-                employees.push(engineer);
-                idValidator(idCheck);
-                return data.engineer;
-              });
-            case "Intern":
-              inquirer.prompt(internQs).then(function (answers) {
-                const intern = new Intern(answers.intName, answers.intId, answers.intEmail, answers.intSchool);
-                employees.push(intern);
-                idValidator();
-                return data.intern;
-              });
-          }
-        }
-      } else {
-        console.log("bye");
-        // nextMember = false;
-        // fileToHTML();
-      }
-    });
-  });
-};
-// mgrPrompt();
-// const engineer = new Engineer(answers.engName, answers.engID, answers.engEmail, answers.engGitHub);
-// employees.push(engineer);
-// const intern = new Intern(answers.intName, answers.intID, answers.intEmail, answers.intSchool);
-// employees.push(intern);
-// console.log(answers);
-// render.render(employees);
-// fs.writeFileSync(outputPath, render( {...employees} ), "utf-8");
-// }).done(function(employees) {
-mgrPrompt();
+    generateTeam();
 
-function fileToHTML() {
+    function generateTeam() {
+    inquirer.prompt(memberQ).then(function(answers) {
+      if (answers.teamMember === "Engineer") {
+        inquirer.prompt(engineerQs).then(function (answers) {
+          const engineer = new Engineer(answers.engName, answers.engId, answers.engEmail, answers.engGitHub);
+          employees.push(engineer);
+          generateTeam();
+        });
+      } else if (answers.teamMember === "Intern") {
+        inquirer.prompt(internQs).then(function (answers) {
+          const intern = new Intern(answers.intName, answers.intId, answers.intEmail, answers.intSchool);
+          employees.push(intern);
+          generateTeam();
+        });
+      } else {
+        writeToHTML();
+      };
+    });
+  };
+});
+};
+
+start();
+
+function writeToHTML() {
   fs.writeFileSync(outputPath, render(employees), "utf-8"),
     function (err) {
-      if (err) {
-        throw err;
-      }
+      if (err) throw err;
     };
+  console.log("Your team has been generated!");
 };
 
-function idValidator() {
-  if (data.memberQ.choices === data.mangId) {
-    inquirer.prompt(validateQ);
-  }
-};
+// const validateQ = {
+ // type: "validate",
+  // message: "That ID is already taken. Please choose another.",
+  // name: "idCheck"
+// }
+// function idValidator(answers) {
+  // if (managerQs.mangId === answers.mangId || internQs.intId === answers.intId || engineerQs.engId === answers.engId)  {
+    // inquirer.prompt(validateQ);
+    // generateTeam();
+  // }
+// };
+
+// Write code to use inquirer to gather information about the development team members,
+// and to create objects for each team member (using the correct classes as blueprints!)
+
+// After the user has input all employees desired, call the `render` function (required
+// above) and pass in an array containing all employee objects; the `render` function will
 // After you have your html, you're now ready to create an HTML file using the HTML
 // returned from the `render` function. Now write it to a file named `team.html` in the
 // `output` folder. You can use the variable `outputPath` above target this location.
